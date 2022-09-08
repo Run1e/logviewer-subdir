@@ -161,6 +161,9 @@ class Attachment:
             self.is_image = data["is_image"]
             self.size = data["size"]
 
+    def __str__(self):
+        return self.url
+
 
 class Message:
     def __init__(self, data):

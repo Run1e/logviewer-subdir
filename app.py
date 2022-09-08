@@ -21,16 +21,21 @@ if prefix == "NONE":
 
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
-    MONGO_URI = os.environ['CONNECTION_URI']
+    MONGO_URI = os.environ["CONNECTION_URI"]
+
+subdir = os.getenv("SUBDIR", "")
+if subdir:
+    subdir = "/" + subdir
 
 app = Sanic(__name__)
-app.static("/static", "./static")
+app.static(subdir + "/static", "./static")
 
 jinja_env = Environment(loader=FileSystemLoader("templates"))
 
 
 def render_template(name, *args, **kwargs):
     template = jinja_env.get_template(name + ".html")
+    kwargs["subdir"] = subdir
     return response.html(template.render(*args, **kwargs))
 
 
@@ -47,12 +52,12 @@ async def not_found(request, exc):
     return render_template("not_found")
 
 
-@app.get("/")
+@app.get(subdir + "/")
 async def index(request):
     return render_template("index")
 
 
-@app.get(prefix + "/raw/<key>")
+@app.get(subdir + prefix + "/raw/<key>")
 async def get_raw_logs_file(request, key):
     """Returns the plain text rendered log entry"""
     document = await app.ctx.db.logs.find_one({"key": key})
@@ -65,7 +70,7 @@ async def get_raw_logs_file(request, key):
     return log_entry.render_plain_text()
 
 
-@app.get(prefix + "/<key>")
+@app.get(subdir + prefix + "/<key>")
 async def get_logs_file(request, key):
     """Returns the html rendered log entry"""
     document = await app.ctx.db.logs.find_one({"key": key})
